@@ -224,8 +224,14 @@
     - Log all errors with context
     - _Requirements: 6.4, 6.5_
 
-- [ ] 9. Implement main orchestrator
-  - [ ] 9.1 Create main scraping workflow
+- [x] 9. Implement main orchestrator
+
+
+
+
+  - [x] 9.1 Create main scraping workflow
+
+
     - Initialize WebDriverManager
     - Run ProfessorListScraper to get all professor URLs
     - Loop through each professor URL
@@ -233,31 +239,45 @@
     - Collect all Professor objects
     - _Requirements: 1.1, 2.1, 3.6_
   
-  - [ ] 9.2 Add progress tracking
+  - [x] 9.2 Add progress tracking
+
+
     - Implement progress bar or counter
     - Log progress at regular intervals
     - Display estimated time remaining
     - _Requirements: 6.6_
   
-  - [ ] 9.3 Implement rate limiting
+  - [x] 9.3 Implement rate limiting
+
+
     - Add 1-2 second delay between professor page requests
     - Randomize delays slightly
     - _Requirements: 6.4_
 
-- [ ] 10. Implement JSON output writer
-  - [ ] 10.1 Create JSONWriter class
+- [x] 10. Implement JSON output writer
+
+
+
+
+  - [x] 10.1 Create JSONWriter class
+
+
     - Implement method to serialize Professor objects to JSON
     - Ensure UTF-8 encoding
     - Format JSON with indentation for readability
     - _Requirements: 4.4, 5.1_
   
-  - [ ] 10.2 Write final output file
+  - [x] 10.2 Write final output file
+
+
     - Save all Professor objects to `usf_professors.json`
     - Validate JSON structure before writing
     - Handle write errors gracefully
     - _Requirements: 5.1, 5.5_
   
-  - [ ] 10.3 Generate scraping summary report
+  - [x] 10.3 Generate scraping summary report
+
+
     - Count total professors scraped
     - Count total reviews collected
     - List any errors or skipped professors
