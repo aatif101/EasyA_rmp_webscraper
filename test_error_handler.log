@@ -1,0 +1,17 @@
+2025-10-16 18:52:44 - root - INFO - ============================================================
+2025-10-16 18:52:44 - root - INFO - RateMyProfessor Scraper - Logging initialized
+2025-10-16 18:52:44 - root - INFO - ============================================================
+2025-10-16 18:52:44 - src.utils.error_handler - WARNING - Attempt 1/3 failed: Attempt 1 failed. Retrying in 1s...
+2025-10-16 18:52:45 - src.utils.error_handler - WARNING - Attempt 2/3 failed: Attempt 2 failed. Retrying in 2s...
+2025-10-16 18:52:47 - root - INFO - ============================================================
+2025-10-16 18:52:47 - root - INFO - RateMyProfessor Scraper - Logging initialized
+2025-10-16 18:52:47 - root - INFO - ============================================================
+2025-10-16 18:52:47 - src.utils.error_handler - WARNING - Element not found on first attempt: test-selector. Retrying...
+2025-10-16 18:52:49 - root - INFO - ============================================================
+2025-10-16 18:52:49 - root - INFO - RateMyProfessor Scraper - Logging initialized
+2025-10-16 18:52:49 - root - INFO - ============================================================
+2025-10-16 18:52:49 - src.utils.error_handler - ERROR - Error in test context: ValueError - Test error message
+Traceback (most recent call last):
+  File "C:\Users\smati\Cursor Projects\EasyA_rmp_webscraper\test_error_handler.py", line 57, in test_log_error
+    raise ValueError("Test error message")
+ValueError: Test error message

@@ -9,6 +9,8 @@ import time
 
 from ..models.professor import Professor
 from ..utils.cleaner import DataCleaner
+from ..utils.error_handler import ErrorHandler
+from .review_scraper import ReviewScraper
 
 logger = logging.getLogger(__name__)
 
@@ -25,10 +27,12 @@ class ProfessorDetailScraper:
         """
         self.driver = driver
         self.cleaner = DataCleaner()
+        self.error_handler = ErrorHandler(max_retries=3)
+        self.review_scraper = ReviewScraper(driver)
     
     def scrape_professor(self, url: str) -> Optional[Professor]:
         """
-        Orchestrate the scraping of a professor's complete data.
+        Orchestrate the scraping of a professor's complete data with error recovery.
         
         Args:
             url: URL of the professor's detail page
@@ -39,11 +43,14 @@ class ProfessorDetailScraper:
         try:
             logger.info(f"Scraping professor page: {url}")
             
-            # Navigate to professor page
-            self.driver.get(url)
-            time.sleep(2)  # Wait for page to load
+            # Navigate to professor page with retry logic
+            def _navigate():
+                self.driver.get(url)
+                time.sleep(2)  # Wait for page to load
             
-            # Extract metadata
+            self.error_handler.retry_with_backoff(_navigate)
+            
+            # Extract metadata with error handling
             professor_name = self._extract_professor_name()
             department = self._extract_department()
             overall_quality = self._extract_overall_quality()
@@ -56,7 +63,12 @@ class ProfessorDetailScraper:
             # Extract tags
             tags = self.extract_tags()
             
-            # Create Professor object (reviews will be added by ReviewScraper)
+            # Load all reviews and extract them
+            logger.info("Loading and extracting reviews...")
+            self.review_scraper.load_all_reviews()
+            reviews = self.review_scraper.extract_reviews()
+            
+            # Create Professor object with metadata and reviews
             professor = Professor(
                 professor_name=professor_name,
                 department=department,
@@ -65,14 +77,15 @@ class ProfessorDetailScraper:
                 would_take_again=would_take_again,
                 rating_distribution=rating_distribution,
                 tags=tags,
-                reviews=[]
+                reviews=reviews
             )
             
-            logger.info(f"Successfully scraped professor: {professor_name}")
+            logger.info(f"Successfully scraped professor: {professor_name} with {len(reviews)} reviews")
             return professor
             
         except Exception as e:
-            logger.error(f"Error scraping professor page {url}: {e}")
+            self.error_handler.log_error(e, f"scraping professor page {url}")
+            logger.warning(f"Skipping professor at {url} due to errors")
             return None
 
     def _extract_professor_name(self, retry: bool = True) -> str:

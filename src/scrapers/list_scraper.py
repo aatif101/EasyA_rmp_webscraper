@@ -10,6 +10,7 @@ from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 from src.models import ProfessorSummary
 from src.utils.cleaner import DataCleaner
+from src.utils.error_handler import ErrorHandler
 
 logger = logging.getLogger(__name__)
 
@@ -28,19 +29,27 @@ class ProfessorListScraper:
         self.driver = driver
         self.base_url = base_url
         self.cleaner = DataCleaner()
+        self.error_handler = ErrorHandler(max_retries=3)
         
         logger.info(f"ProfessorListScraper initialized with URL: {base_url}")
     
     def navigate_to_listing(self):
-        """Navigate to the USF professor listing page."""
-        logger.info(f"Navigating to {self.base_url}")
-        self.driver.get(self.base_url)
-        time.sleep(2)  # Wait for initial page load
-        logger.info("Successfully navigated to listing page")
+        """Navigate to the USF professor listing page with retry logic."""
+        def _navigate():
+            logger.info(f"Navigating to {self.base_url}")
+            self.driver.get(self.base_url)
+            time.sleep(2)  # Wait for initial page load
+            logger.info("Successfully navigated to listing page")
+        
+        try:
+            self.error_handler.retry_with_backoff(_navigate)
+        except Exception as e:
+            self.error_handler.log_error(e, "navigating to listing page")
+            raise
 
     def _click_show_more(self) -> bool:
         """
-        Find and click the "Show More" button using XPath.
+        Find and click the "Show More" button using XPath with error handling.
         
         Returns:
             True if button was found and clicked, False otherwise
@@ -61,6 +70,9 @@ class ProfessorListScraper:
             
             show_more_button.click()
             logger.debug("Clicked 'Show More' button")
+            
+            # Add delay to handle rate limiting
+            time.sleep(1.5)
             return True
             
         except NoSuchElementException:
@@ -68,6 +80,8 @@ class ProfessorListScraper:
             return False
         except Exception as e:
             logger.warning(f"Error clicking 'Show More' button: {e}")
+            # Wait before retrying to handle rate limiting
+            time.sleep(2)
             return False
     
     def load_all_professors(self) -> None:
@@ -79,16 +93,20 @@ class ProfessorListScraper:
         click_count = 0
         
         while True:
-            # Try to click the "Show More" button
-            if not self._click_show_more():
-                # Button not found or click failed - all professors loaded
+            try:
+                # Try to click the "Show More" button
+                if not self._click_show_more():
+                    # Button not found or click failed - all professors loaded
+                    break
+                
+                click_count += 1
+                logger.info(f"Clicked 'Show More' {click_count} time(s)")
+                
+            except Exception as e:
+                self.error_handler.log_error(e, f"loading professors (click {click_count})")
+                logger.warning("Continuing to next iteration after error")
+                time.sleep(2)  # Wait before continuing
                 break
-            
-            click_count += 1
-            logger.info(f"Clicked 'Show More' {click_count} time(s)")
-            
-            # Add delay between clicks to avoid rate limiting
-            time.sleep(1.5)  # 1.5 second delay
         
         logger.info(f"Finished loading professors after {click_count} clicks")
         time.sleep(1)  # Final wait for content to settle
@@ -131,7 +149,7 @@ class ProfessorListScraper:
     
     def _extract_single_card(self, card) -> ProfessorSummary:
         """
-        Extract data from a single professor card element.
+        Extract data from a single professor card element with error handling.
         
         Args:
             card: WebElement representing a professor card
